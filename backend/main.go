@@ -4,6 +4,7 @@ import (
     "encoding/json"
     "log"
     "net/http"
+    "strings"
     "sync"
 )
 
@@ -14,16 +15,18 @@ type Task struct {
 }
 
 var (
-    tasks   []Task
-    nextID  = 1
-    tasksMu sync.Mutex
+    tasks  = []Task{} 
+    nextID = 1
+    mu     sync.RWMutex  
 )
  
 func enableCORS(w http.ResponseWriter, r *http.Request) bool {
     w.Header().Set("Access-Control-Allow-Origin", "*")
     w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
     w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
- 
+    w.Header().Set("Vary", "Origin")
+    w.Header().Set("Access-Control-Max-Age", "86400")  
+
     if r.Method == http.MethodOptions {
         w.WriteHeader(http.StatusOK)
         return true
@@ -31,34 +34,47 @@ func enableCORS(w http.ResponseWriter, r *http.Request) bool {
     return false
 }
 
-func createTask(w http.ResponseWriter, r *http.Request) {
+func createTask(w http.ResponseWriter, r *http.Request) { 
+    dec := json.NewDecoder(r.Body)
+    dec.DisallowUnknownFields()
     var t Task
-    if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+    if err := dec.Decode(&t); err != nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
         return
     }
 
-    tasksMu.Lock()
+    t.Title = strings.TrimSpace(t.Title)
+    if t.Title == "" {
+        http.Error(w, "title is required", http.StatusBadRequest)
+        return
+    }
+
+    mu.Lock()
     t.ID = nextID
     nextID++
     tasks = append(tasks, t)
-    tasksMu.Unlock()
+    mu.Unlock()
 
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusCreated)
-    json.NewEncoder(w).Encode(t)
+    _ = json.NewEncoder(w).Encode(t)
 }
 
 func getTasks(w http.ResponseWriter, r *http.Request) {
-    tasksMu.Lock()
-    defer tasksMu.Unlock()
-
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(tasks)
+
+    mu.RLock()
+    defer mu.RUnlock()
+
+    if len(tasks) == 0 { 
+        w.Write([]byte("[]"))
+        return
+    }
+    _ = json.NewEncoder(w).Encode(tasks)
 }
 
 func main() {
-    http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) { 
+    http.HandleFunc("/tasks", func(w http.ResponseWriter, r *http.Request) {
         if handled := enableCORS(w, r); handled {
             return
         }
@@ -73,6 +89,6 @@ func main() {
         }
     })
 
-    log.Println("Server running on :8080")
+    log.Println("Server running on http://localhost:8080")
     log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -1,0 +1,9 @@
+# Go
+*.exe
+*.test
+vendor/
+
+# Node/Next.js
+node_modules/
+.next/
+.env.local

@@ -92,7 +92,7 @@ go-next-tasks/
 * Modern UI with TailwindCSS
 * TypeScript for type safety
 * Environment variables for API URL
-
+* A progress bar has been added to visualize the percentage of completed tasks.  
 ---
 
 ## ⚡ Tech Stack
@@ -119,9 +119,12 @@ go-next-tasks/
 * **State Management:** Use React Query, Redux, or Zustand for better state handling
 * **Task Editing & Deletion:** Allow updating or deleting tasks
 * **Responsive Design:** Improve layout for mobile and tablet
-* **UI/UX:** Animations, drag-and-drop tasks, notifications
-* **Testing:** Unit tests and integration tests for components and pages
+* **UI/UX:** Animations, drag-and-drop tasks, notifications, pagination, status badges
+* **Testing:** Unit tests for components (React Testing Library). Integration tests for API calls
 * **Error Handling:** Global error boundaries and better UX for API errors
+* **Internationalization (i18n)** Add support for multiple languages
+* **Tables for Task Management** Add tabular view, sorting, filtering, Status (Done/Pending)
+* **Dark Mode / Light Mode Toggle** Add a theme switcher component (dark/light mode)
 
 ### Fullstack / DevOps
 
